@@ -1,0 +1,10 @@
+.dashboard-header{
+    margin-bottom: 1rem !important;
+    font-size: 2rem !important;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif !important;
+}
+
+@media only screen and (max-width: 992px) {
+    .dashboard-header{ font-size: 1.7rem !important; }
+
+}
