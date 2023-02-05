@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import * as Yup from "yup";
 import { Formik } from "formik";
 import Avatar from "@mui/material/Avatar";
@@ -31,6 +31,7 @@ const LoginSchema = Yup.object().shape({
 export default function Login() {
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
+  const [isError, setIsError] = useState("");
   return (
     <ThemeProvider theme={theme}>
       <Container component="main" maxWidth="xs">
@@ -61,9 +62,11 @@ export default function Login() {
                 data: values,
               });
               if (response.status >= 200 && response.status < 300) {
-                auth.login();
+                await auth.login();
+                await auth.handleShow();
                 navigate("/dashboard");
               } else {
+                setIsError(response.data);
                 auth.logout();
               }
             }}
@@ -127,6 +130,11 @@ export default function Login() {
               </form>
             )}
           </Formik>
+        </Box>
+        <Box sx={{ mt: 3, mb: 3 }}>
+          <Typography variant="body2" color="red" align="center">
+            {isError !== "" ? isError.message : null}
+          </Typography>
         </Box>
         <Box sx={{ mt: 8, mb: 4 }}>
           <Typography variant="body2" color="text.secondary" align="center">

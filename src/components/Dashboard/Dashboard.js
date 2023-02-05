@@ -1,72 +1,71 @@
-import { Box, Button, Grid, TextField, Typography } from "@mui/material";
-import axios from "axios";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
+  Pagination,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
-import ReactTable from "react-table";
+import { useNavigate } from "react-router";
+import { BsCartPlus } from "react-icons/bs";
 import "react-table/react-table.css";
 import AuthContext from "../../context";
+import usePagination from "../../utils/Pagination";
 import "./Dashboard.css";
 
 const Dashboard = () => {
-  const [search, setSearch] = useState("");
-  const [data, setData] = useState([]);
-  const [staticData, setStaticData] = useState([]);
-  const [loading, setloading] = useState(false);
-
   const auth = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const [search, setSearch] = useState("");
+  const [data, setdata] = useState(auth.show);
+
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 24;
+
+  const count = Math.ceil(data.length / PER_PAGE);
+  const _DATA = usePagination(PER_PAGE);
 
   useEffect(() => {
-    getData();
-  }, []);
+    setdata(auth.show);
+  }, [auth.show]);
 
   useEffect(() => {
-    globalSearch();
+    auth.handleSearch(search.toLowerCase());
+    setPage(1);
+    _DATA.jump(1);
   }, [search]);
 
-  const getData = async () => {
-    try {
-      const dataPosts = await axios.get(
-        "https://jsonplaceholder.typicode.com/posts"
-      );
-      if (dataPosts?.data.length > 0) {
-        setData(dataPosts.data);
-        setStaticData(dataPosts.data);
-      }
-    } catch (error) {
-      console.log("error ");
-    } finally {
-      setloading(true);
-    }
-  };
-
-  let columns = [
-    {
-      Header: "Title",
-      accessor: "title",
-      sortable: true,
-    },
-    {
-      Header: "Body",
-      accessor: "body",
-      sortable: true,
-    },
-  ];
-
-  const globalSearch = async () => {
-    let filteredData = await staticData.filter((value) => {
-      return (
-        value.title.toLowerCase().includes(search.toLowerCase()) ||
-        value.body.toLowerCase().includes(search.toLowerCase())
-      );
-    });
-    setData(filteredData);
+  const handleChange = (e, p) => {
+    setPage(p);
+    _DATA.jump(p);
   };
   return (
     <Box>
-      <Typography className="dashboard-header"> Dashboard </Typography>
+      <Typography className="dashboard-header" variant="h2">
+        Dashboard
+      </Typography>
       <Grid container spacing={4}>
-        <Grid item xs={8}>
+        <Grid item xs={4}>
           <Button variant="outlined" onClick={() => auth.logout()}>
             Logout
+          </Button>
+        </Grid>
+        <Grid item xs={4}>
+          <Button variant="outlined" onClick={() => navigate("/favourite")}>
+            <Typography
+              variant="h6"
+              component="span"
+              sx={{ paddingRight: "10px" }}
+            >
+              <BsCartPlus />
+              Favourite
+              <span> {auth.favourite.length}</span>
+            </Typography>
           </Button>
         </Grid>
         <Grid item xs={4}>
@@ -74,24 +73,89 @@ const Dashboard = () => {
             size="large"
             name="searchInput"
             value={search}
-            label="Search"
+            label="Search By Name"
             fullWidth
             onChange={async (e) => setSearch(e.target.value)}
           />
         </Grid>
-        <Grid item xs={12}>
-          {loading ? (
-            <ReactTable
-              data={data || []}
-              columns={columns}
-              defaultPageSize={10}
-              className="-striped -highlight"
-            />
+        <Grid
+          container
+          spacing={{ xs: 2, md: 4 }}
+          columns={{ xs: 4, sm: 6, md: 12 }}
+        >
+          {auth.show.length > 0 ? (
+            _DATA.currentData().map((movie, index) => (
+              <Grid item xs={2} sm={4} md={4} key={index}>
+                <Card>
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={movie.image.medium}
+                      alt={movie.name}
+                    />
+                  </Box>
+                  <CardContent sx={{ height: "225px" }}>
+                    <Typography gutterBottom variant="h5" component="div">
+                      {movie.name}
+                    </Typography>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        component="div"
+                        sx={{ fontSize: "15px", fontFamily: "cursive" }}
+                      >
+                        Released Date
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {movie.premiered}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        component="div"
+                        sx={{ fontSize: "15px", fontFamily: "cursive" }}
+                      >
+                        IMD Rating
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {movie.rating.average}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Button
+                        onClick={() => navigate("/details", { state: movie })}
+                      >
+                        View More
+                      </Button>
+                      <Button onClick={() => auth.handleFavourite(movie)}>
+                        Add Favourite
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
           ) : (
-            <Typography variant="h5">loading</Typography>
+            <>loading...</>
           )}
         </Grid>
       </Grid>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: "20px" }}>
+        <Pagination
+          count={count}
+          size="large"
+          page={page}
+          variant="outlined"
+          shape="rounded"
+          onChange={handleChange}
+        />
+      </Box>
     </Box>
   );
 };

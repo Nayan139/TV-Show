@@ -67,7 +67,8 @@ export default function SignUp() {
               });
 
               if (response.status >= 200 && response.status < 300) {
-                auth.login();
+                await auth.login();
+                await auth.handleShow();
                 navigate("/dashboard");
               } else {
                 auth.logout();
